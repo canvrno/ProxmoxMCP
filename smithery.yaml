@@ -1,0 +1,54 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - proxmoxHost
+      - proxmoxUser
+      - proxmoxTokenName
+      - proxmoxTokenValue
+    properties:
+      proxmoxHost:
+        type: string
+        description: The hostname or IP of the Proxmox server.
+      proxmoxUser:
+        type: string
+        description: The username for Proxmox authentication, including realm (e.g.,
+          'username@pve').
+      proxmoxTokenName:
+        type: string
+        description: The name of the API token for Proxmox.
+      proxmoxTokenValue:
+        type: string
+        description: The secret value of the API token.
+      proxmoxPort:
+        type: number
+        default: 8006
+        description: Port number for connecting to Proxmox.
+      proxmoxVerifySsl:
+        type: boolean
+        default: true
+        description: Verify SSL certificates when connecting to Proxmox.
+      proxmoxService:
+        type: string
+        default: PVE
+        description: The service type (e.g., 'PVE').
+      logLevel:
+        type: string
+        default: INFO
+        description: Logging level.
+      logFormat:
+        type: string
+        default: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        description: Format for log messages.
+      logFile:
+        type: string
+        default: proxmox_mcp.log
+        description: File path for logging output.
+  commandFunction:
+    # A function that produces the CLI command to start the MCP on stdio.
+    |-
+    (config) => ({command: 'python', args: ['-m', 'proxmox_mcp.server'], env: {PROXMOX_HOST: config.proxmoxHost, PROXMOX_USER: config.proxmoxUser, PROXMOX_TOKEN_NAME: config.proxmoxTokenName, PROXMOX_TOKEN_VALUE: config.proxmoxTokenValue, PROXMOX_PORT: config.proxmoxPort.toString(), PROXMOX_VERIFY_SSL: config.proxmoxVerifySsl.toString(), PROXMOX_SERVICE: config.proxmoxService, LOG_LEVEL: config.logLevel, LOG_FORMAT: config.logFormat, LOG_FILE: config.logFile}})
