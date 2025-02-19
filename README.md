@@ -1,5 +1,7 @@
 # 🚀 Proxmox MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@canvrno/ProxmoxMCP)](https://smithery.ai/server/@canvrno/ProxmoxMCP)
+
 ![ProxmoxMCP](https://github.com/user-attachments/assets/e32ab79f-be8a-420c-ab2d-475612150534)
 
 A Python-based Model Context Protocol (MCP) server for interacting with Proxmox hypervisors, providing a clean interface for managing nodes, VMs, and containers.
@@ -31,6 +33,15 @@ https://github.com/user-attachments/assets/991c81ff-d260-4e75-86d3-cedb679a3acf
 
 ## 📦 Installation
 
+### Installing via Smithery
+
+To install Proxmox MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@canvrno/ProxmoxMCP):
+
+```bash
+npx -y @smithery/cli install @canvrno/ProxmoxMCP --client claude
+```
+
+### Manual Installation
 1. Create a directory for your [Cline](https://github.com/cline/cline) MCP servers (if you haven't already):
    ```bash
    mkdir -p ~/Documents/Cline/MCP
