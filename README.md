@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/canvrno-proxmoxmcp-badge.png)](https://mseep.ai/app/canvrno-proxmoxmcp)
+
 # 🚀 Proxmox Manager - Proxmox MCP Server
 
 ![ProxmoxMCP](https://github.com/user-attachments/assets/e32ab79f-be8a-420c-ab2d-475612150534)
