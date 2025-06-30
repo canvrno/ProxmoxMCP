@@ -31,17 +31,32 @@ https://github.com/user-attachments/assets/1b5f42f7-85d5-4918-aca4-d38413b0e82b
 ## 📦 Installation
 
 ### Prerequisites
-- UV package manager (recommended)
 - Python 3.10 or higher
-- Git
 - Access to a Proxmox server with API token credentials
 
 Before starting, ensure you have:
 - [ ] Proxmox server hostname or IP
 - [ ] Proxmox API token (see [API Token Setup](#proxmox-api-token-setup))
-- [ ] UV installed (`pip install uv`)
 
-### Option 1: Quick Install (Recommended)
+### Option 1: Quick Start with uvx (Easiest)
+
+For immediate use without installation:
+```bash
+# Install uvx if you haven't already
+pip install uv
+
+# Create configuration file (see Configuration section below)
+mkdir -p proxmox-config
+# Copy and edit config.example.json to proxmox-config/config.json
+
+# Set configuration path and run
+export PROXMOX_MCP_CONFIG="$(pwd)/proxmox-config/config.json"
+uvx proxmox-mcp
+```
+
+### Option 2: Development Install
+
+For development or customization:
 
 1. Clone and set up environment:
    ```bash
@@ -70,7 +85,7 @@ Before starting, ensure you have:
    ```bash
    # Create config directory and copy template
    mkdir -p proxmox-config
-   cp config/config.example.json proxmox-config/config.json
+   cp proxmox-config/config.example.json proxmox-config/config.json
    ```
 
 4. Edit `proxmox-config/config.json`:
@@ -133,6 +148,16 @@ Before starting, ensure you have:
 
 
 ## 🚀 Running the Server
+
+### Quick Start with uvx (Recommended)
+The easiest way to run the server is with uvx:
+```bash
+# Set your configuration file path
+export PROXMOX_MCP_CONFIG="/path/to/your/proxmox-config/config.json"
+
+# Run the server with uvx (no installation needed)
+uvx proxmox-mcp
+```
 
 ### Development Mode
 For testing and development:
