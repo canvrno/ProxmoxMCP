@@ -142,10 +142,21 @@ class ProxmoxMCPServer:
             self.logger.error(f"Server error: {e}")
             sys.exit(1)
 
-if __name__ == "__main__":
+def main() -> None:
+    """Main entry point for the Proxmox MCP server.
+    
+    This function serves as the primary entry point for uvx and script execution.
+    It handles configuration loading, server initialization, and graceful shutdown.
+    """
     config_path = os.getenv("PROXMOX_MCP_CONFIG")
     if not config_path:
-        print("PROXMOX_MCP_CONFIG environment variable must be set")
+        print("Error: PROXMOX_MCP_CONFIG environment variable must be set")
+        print("\nTo run the Proxmox MCP server:")
+        print("1. Set the configuration file path:")
+        print("   export PROXMOX_MCP_CONFIG=/path/to/config.json")
+        print("2. Run the server:")
+        print("   uvx proxmox-mcp")
+        print("\nFor more information, see the README.md file.")
         sys.exit(1)
     
     try:
@@ -157,3 +168,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
+
+if __name__ == "__main__":
+    main()
