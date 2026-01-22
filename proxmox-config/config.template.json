@@ -11,7 +11,7 @@
             "auth": {
                 "user": "root@pam",
                 "token_name": "mcp-token",
-                "token_value": "YOUR_TOKEN_HERE"
+                "token_value": "1125dae8-0bd6-4342-a385-7da770aff655"
             }
         },
         {
@@ -25,7 +25,7 @@
             "auth": {
                 "user": "root@pam",
                 "token_name": "mcp-token",
-                "token_value": "YOUR_TOKEN_HERE"
+                "token_value": "9f4912cb-dcc9-4e6a-968f-636f2a003454"
             }
         },
         {
@@ -39,7 +39,7 @@
             "auth": {
                 "user": "root@pam",
                 "token_name": "mcp-token",
-                "token_value": "YOUR_TOKEN_HERE"
+                "token_value": "7a3e4cf0-ada2-459a-8037-b8bdf932a09b"
             }
         },
         {
@@ -53,7 +53,7 @@
             "auth": {
                 "user": "root@pam",
                 "token_name": "mcp-token",
-                "token_value": "YOUR_TOKEN_HERE"
+                "token_value": "dcf00cab-3369-4084-8d42-3bc282a08d73"
             }
         }
     ],
