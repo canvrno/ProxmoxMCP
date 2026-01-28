@@ -12,8 +12,41 @@ and valid before the server starts operation.
 """
 import json
 import os
+from pathlib import Path
 from typing import Optional
+
+from dotenv import load_dotenv
+
 from .models import Config
+
+
+def _load_env_auth() -> dict:
+    """Load authentication from environment variables.
+
+    Looks for:
+    - PROXMOX_TOKEN_ID: Format "user@realm!token_name"
+    - PROXMOX_TOKEN_SECRET: The token secret value
+
+    Returns:
+        dict with user, token_name, token_value if found, empty dict otherwise
+    """
+    token_id = os.getenv("PROXMOX_TOKEN_ID")
+    token_secret = os.getenv("PROXMOX_TOKEN_SECRET")
+
+    if not token_id or not token_secret:
+        return {}
+
+    # Parse token_id format: "user@realm!token_name"
+    if "!" not in token_id:
+        return {}
+
+    user, token_name = token_id.rsplit("!", 1)
+    return {
+        "user": user,
+        "token_name": token_name,
+        "token_value": token_secret,
+    }
+
 
 def load_config(config_path: Optional[str] = None) -> Config:
     """Load and validate configuration from JSON file.
@@ -62,11 +95,25 @@ def load_config(config_path: Optional[str] = None) -> Config:
     if not config_path:
         raise ValueError("PROXMOX_MCP_CONFIG environment variable must be set")
 
+    # Load .env file from config directory or project root
+    config_dir = Path(config_path).parent
+    for env_path in [config_dir / ".env", Path.cwd() / ".env"]:
+        if env_path.exists():
+            load_dotenv(env_path)
+            break
+
     try:
         with open(config_path) as f:
             config_data = json.load(f)
             if not config_data.get('proxmox', {}).get('host'):
                 raise ValueError("Proxmox host cannot be empty")
+
+            # Merge environment auth into config (env vars take precedence)
+            env_auth = _load_env_auth()
+            if env_auth:
+                config_data.setdefault("auth", {})
+                config_data["auth"] = {**config_data["auth"], **env_auth}
+
             return Config(**config_data)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON in config file: {e}")
