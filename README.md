@@ -31,175 +31,102 @@ https://github.com/user-attachments/assets/1b5f42f7-85d5-4918-aca4-d38413b0e82b
 ## 📦 Installation
 
 ### Prerequisites
-- UV package manager (recommended)
-- Python 3.10 or higher
-- Git
-- Access to a Proxmox server with API token credentials
+- [uv](https://docs.astral.sh/uv/) package manager
+- Python 3.10+
+- Proxmox server with API token (see [API Token Setup](#proxmox-api-token-setup))
 
-Before starting, ensure you have:
-- [ ] Proxmox server hostname or IP
-- [ ] Proxmox API token (see [API Token Setup](#proxmox-api-token-setup))
-- [ ] UV installed (`pip install uv`)
+### Quick Start
 
-### Option 1: Quick Install (Recommended)
+```bash
+# Clone the repository
+git clone https://github.com/canvrno/ProxmoxMCP.git
+cd ProxmoxMCP
 
-1. Clone and set up environment:
-   ```bash
-   # Clone repository
-   cd ~/Documents/Cline/MCP  # For Cline users
-   # OR
-   cd your/preferred/directory  # For manual installation
-   
-   git clone https://github.com/canvrno/ProxmoxMCP.git
-   cd ProxmoxMCP
+# Create config files
+mkdir -p proxmox-config
+cp config/config.example.json proxmox-config/config.json
 
-   # Create and activate virtual environment
-   uv venv
-   source .venv/bin/activate  # Linux/macOS
-   # OR
-   .\.venv\Scripts\Activate.ps1  # Windows
-   ```
+# Create .env for credentials
+cat > .env << 'EOF'
+PROXMOX_TOKEN_ID=root@pam!mcp
+PROXMOX_TOKEN_SECRET=your-token-secret-here
+EOF
 
-2. Install dependencies:
-   ```bash
-   # Install with development dependencies
-   uv pip install -e ".[dev]"
-   ```
+# Edit config with your Proxmox host
+# Edit .env with your API token credentials
+```
 
-3. Create configuration:
-   ```bash
-   # Create config directory and copy template
-   mkdir -p proxmox-config
-   cp config/config.example.json proxmox-config/config.json
-   ```
+### Configuration
 
-4. Edit `proxmox-config/config.json`:
-   ```json
-   {
-       "proxmox": {
-           "host": "PROXMOX_HOST",        # Required: Your Proxmox server address
-           "port": 8006,                  # Optional: Default is 8006
-           "verify_ssl": false,           # Optional: Set false for self-signed certs
-           "service": "PVE"               # Optional: Default is PVE
-       },
-       "auth": {
-           "user": "USER@pve",            # Required: Your Proxmox username
-           "token_name": "TOKEN_NAME",    # Required: API token ID
-           "token_value": "TOKEN_VALUE"   # Required: API token value
-       },
-       "logging": {
-           "level": "INFO",               # Optional: DEBUG for more detail
-           "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-           "file": "proxmox_mcp.log"      # Optional: Log to file
-       }
-   }
-   ```
+Edit `proxmox-config/config.json`:
+```json
+{
+    "proxmox": {
+        "host": "your-proxmox-host",
+        "port": 8006,
+        "verify_ssl": false,
+        "service": "PVE"
+    },
+    "auth": {},
+    "logging": {
+        "level": "INFO",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    }
+}
+```
 
-### Verifying Installation
+Edit `.env` with your Proxmox API token:
+```
+PROXMOX_TOKEN_ID=root@pam!mcp
+PROXMOX_TOKEN_SECRET=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
 
-1. Check Python environment:
-   ```bash
-   python -c "import proxmox_mcp; print('Installation OK')"
-   ```
-
-2. Run the tests:
-   ```bash
-   pytest
-   ```
-
-3. Verify configuration:
-   ```bash
-   # Linux/macOS
-   PROXMOX_MCP_CONFIG="proxmox-config/config.json" python -m proxmox_mcp.server
-
-   # Windows (PowerShell)
-   $env:PROXMOX_MCP_CONFIG="proxmox-config\config.json"; python -m proxmox_mcp.server
-   ```
-
-   You should see either:
-   - A successful connection to your Proxmox server
-   - Or a connection error (if Proxmox details are incorrect)
-
-## ⚙️ Configuration
+The `.env` file uses the format `user@realm!token_name` for `PROXMOX_TOKEN_ID`.
 
 ### Proxmox API Token Setup
 1. Log into your Proxmox web interface
 2. Navigate to Datacenter -> Permissions -> API Tokens
 3. Create a new API token:
    - Select a user (e.g., root@pam)
-   - Enter a token ID (e.g., "mcp-token")
+   - Enter a token ID (e.g., "mcp")
    - Uncheck "Privilege Separation" if you want full access
    - Save and copy both the token ID and secret
 
-
 ## 🚀 Running the Server
 
-### Development Mode
-For testing and development:
-```bash
-# Activate virtual environment first
-source .venv/bin/activate  # Linux/macOS
-# OR
-.\.venv\Scripts\Activate.ps1  # Windows
+### With uv (Recommended)
 
-# Run the server
-python -m proxmox_mcp.server
+```bash
+PROXMOX_MCP_CONFIG=proxmox-config/config.json uv run proxmox-mcp
 ```
 
-### Cline Desktop Integration
+### Claude Code Integration
 
-For Cline users, add this configuration to your MCP settings file (typically at `~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`):
+```bash
+claude mcp add proxmox \
+  -e PROXMOX_MCP_CONFIG=/path/to/ProxmoxMCP/proxmox-config/config.json \
+  -- uv run --directory /path/to/ProxmoxMCP proxmox-mcp
+```
+
+Then restart Claude Code to load the MCP server.
+
+### Cline Integration
+
+Add to your Cline MCP settings (`~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`):
 
 ```json
 {
     "mcpServers": {
-        "github.com/canvrno/ProxmoxMCP": {
-            "command": "/absolute/path/to/ProxmoxMCP/.venv/bin/python",
-            "args": ["-m", "proxmox_mcp.server"],
-            "cwd": "/absolute/path/to/ProxmoxMCP",
+        "proxmox": {
+            "command": "uv",
+            "args": ["run", "--directory", "/path/to/ProxmoxMCP", "proxmox-mcp"],
             "env": {
-                "PYTHONPATH": "/absolute/path/to/ProxmoxMCP/src",
-                "PROXMOX_MCP_CONFIG": "/absolute/path/to/ProxmoxMCP/proxmox-config/config.json",
-                "PROXMOX_HOST": "your-proxmox-host",
-                "PROXMOX_USER": "username@pve",
-                "PROXMOX_TOKEN_NAME": "token-name",
-                "PROXMOX_TOKEN_VALUE": "token-value",
-                "PROXMOX_PORT": "8006",
-                "PROXMOX_VERIFY_SSL": "false",
-                "PROXMOX_SERVICE": "PVE",
-                "LOG_LEVEL": "DEBUG"
-            },
-            "disabled": false,
-            "autoApprove": []
+                "PROXMOX_MCP_CONFIG": "/path/to/ProxmoxMCP/proxmox-config/config.json"
+            }
         }
     }
 }
 ```
-
-To help generate the correct paths, you can use this command:
-```bash
-# This will print the MCP settings with your absolute paths filled in
-python -c "import os; print(f'''{{
-    \"mcpServers\": {{
-        \"github.com/canvrno/ProxmoxMCP\": {{
-            \"command\": \"{os.path.abspath('.venv/bin/python')}\",
-            \"args\": [\"-m\", \"proxmox_mcp.server\"],
-            \"cwd\": \"{os.getcwd()}\",
-            \"env\": {{
-                \"PYTHONPATH\": \"{os.path.abspath('src')}\",
-                \"PROXMOX_MCP_CONFIG\": \"{os.path.abspath('proxmox-config/config.json')}\",
-                ...
-            }}
-        }}
-    }}
-}}''')"
-```
-
-Important:
-- All paths must be absolute
-- The Python interpreter must be from your virtual environment
-- The PYTHONPATH must point to the src directory
-- Restart VSCode after updating MCP settings
 
 # 🔧 Available Tools
 
