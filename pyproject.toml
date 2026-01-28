@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "proxmox-mcp"
 version = "0.1.0"
 description = "A Model Context Protocol server for interacting with Proxmox hypervisors"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     {name = "Kevin", email = "kevin@example.com"}
 ]
@@ -18,7 +18,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -60,7 +59,7 @@ python_files = ["test_*.py"]
 addopts = "-v"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -77,4 +76,4 @@ warn_unreachable = true
 select = ["E", "F", "B", "I"]
 ignore = []
 line-length = 100
-target-version = "py39"
+target-version = "py310"
