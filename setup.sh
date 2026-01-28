@@ -75,10 +75,20 @@ EOF
 
 # Generate Claude Code MCP server config
 generate_claude_config() {
-    info "Generating Claude Code MCP server configuration..."
+    info "Claude Code MCP configuration..."
 
-    local config_json
-    config_json=$(cat << EOF
+    # .mcp.json already exists in the repo with relative paths
+    if [[ -f ".mcp.json" ]]; then
+        info "Found .mcp.json - Claude Code will auto-detect this MCP server"
+        echo ""
+        echo "When you open this project in Claude Code, it will prompt to enable the Proxmox MCP server."
+        echo ""
+    fi
+
+    # Also show Cline config for those using it
+    echo "For Cline users, add this to your MCP settings:"
+    echo ""
+    cat << EOF
 {
   "mcpServers": {
     "proxmox": {
@@ -92,31 +102,7 @@ generate_claude_config() {
   }
 }
 EOF
-)
-
     echo ""
-    echo "Add this to your Claude Code settings (~/.claude/settings.json):"
-    echo ""
-    echo "$config_json"
-    echo ""
-
-    # Check if settings.json exists and offer to update
-    local settings_file="$HOME/.claude/settings.json"
-    if [[ -f "$settings_file" ]] && [[ -t 0 ]]; then
-        read -p "Would you like to automatically add this to your Claude settings? [y/N] " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            # Use jq if available, otherwise manual merge
-            if command -v jq >/dev/null 2>&1; then
-                local merged
-                merged=$(jq --argjson new "$config_json" '. * $new' "$settings_file")
-                echo "$merged" > "$settings_file"
-                info "Updated $settings_file"
-            else
-                warn "jq not installed - please manually add the config above to $settings_file"
-            fi
-        fi
-    fi
 }
 
 # Verify installation
