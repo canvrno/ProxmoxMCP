@@ -20,8 +20,7 @@ import sys
 import signal
 from typing import Optional, List, Annotated
 
-from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.tools import Tool
+from fastmcp import FastMCP
 from mcp.types import TextContent as Content
 from pydantic import Field
 
@@ -142,12 +141,13 @@ class ProxmoxMCPServer:
             self.logger.error(f"Server error: {e}")
             sys.exit(1)
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point for the Proxmox MCP server."""
     config_path = os.getenv("PROXMOX_MCP_CONFIG")
     if not config_path:
         print("PROXMOX_MCP_CONFIG environment variable must be set")
         sys.exit(1)
-    
+
     try:
         server = ProxmoxMCPServer(config_path)
         server.start()
@@ -157,3 +157,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
