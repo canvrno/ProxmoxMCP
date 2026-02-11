@@ -30,6 +30,7 @@ from .core.logging import setup_logging
 from .core.proxmox import ProxmoxManager
 from .tools.node import NodeTools
 from .tools.vm import VMTools
+from .tools.lxc import LXCTools
 from .tools.storage import StorageTools
 from .tools.cluster import ClusterTools
 from .tools.definitions import (
@@ -61,6 +62,7 @@ class ProxmoxMCPServer:
         # Initialize tools
         self.node_tools = NodeTools(self.proxmox)
         self.vm_tools = VMTools(self.proxmox)
+        self.lxc_tools = LXCTools(self.proxmox)
         self.storage_tools = StorageTools(self.proxmox)
         self.cluster_tools = ClusterTools(self.proxmox)
         
@@ -105,6 +107,11 @@ class ProxmoxMCPServer:
         ):
             return await self.vm_tools.execute_command(node, vmid, command)
 
+        # LXC container tools
+        @self.mcp.tool(description=GET_CONTAINERS_DESC)
+        def get_containers():
+            return self.lxc_tools.get_containers()
+
         # Storage tools
         @self.mcp.tool(description=GET_STORAGE_DESC)
         def get_storage():
@@ -142,11 +149,12 @@ class ProxmoxMCPServer:
             self.logger.error(f"Server error: {e}")
             sys.exit(1)
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the Proxmox MCP server."""
     config_path = os.getenv("PROXMOX_MCP_CONFIG")
     if not config_path:
-        print("PROXMOX_MCP_CONFIG environment variable must be set")
-        sys.exit(1)
+        # Default to config in proxmox-config directory
+        config_path = os.path.join(os.path.dirname(__file__), "..", "..", "proxmox-config", "config.json")
     
     try:
         server = ProxmoxMCPServer(config_path)
@@ -157,3 +165,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
+
+if __name__ == "__main__":
+    main()
