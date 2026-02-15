@@ -32,6 +32,25 @@ command* - Shell command to run (e.g. 'uname -a')
 Example:
 {"success": true, "output": "Linux vm1 5.4.0", "exit_code": 0}"""
 
+GET_VM_NETWORK_INTERFACES_DESC = """Get network interface information for VMs via QEMU guest agent.
+
+Returns IP addresses, MAC addresses, and interface names reported by the guest agent.
+Requires VMs to be running with QEMU guest agent installed.
+
+Parameters:
+targets - List of VM targets: [{"node": "pve1", "vmid": "100"}, ...]. Takes priority if provided.
+node - Host node name (e.g. 'pve1'). If omitted, queries all nodes.
+vmid - VM ID number (e.g. '100'). If omitted, queries all running VMs.
+
+Examples:
+  Specific VMs: targets=[{"node": "pve1", "vmid": "100"}, {"node": "pve2", "vmid": "101"}]
+  Single VM: node="pve1", vmid="100"
+  All VMs on node: node="pve1"
+  All VMs cluster-wide: (no parameters)
+
+Output:
+[{"vmid": "100", "node": "pve1", "name": "ubuntu", "interfaces": [...]}]"""
+
 # Container tool descriptions
 GET_CONTAINERS_DESC = """List all LXC containers across the cluster with their status and configuration.
 

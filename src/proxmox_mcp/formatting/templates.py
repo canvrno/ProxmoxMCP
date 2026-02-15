@@ -209,5 +209,47 @@ class ProxmoxTemplates:
         resources = status.get('resources', [])
         if resources:
             result.append(f"  • Resources: {len(resources)}")
-        
+
+        return "\n".join(result)
+
+    @staticmethod
+    def network_interfaces(data: List[Dict[str, Any]]) -> str:
+        """Template for VM network interfaces output.
+
+        Args:
+            data: List of VM data dictionaries with interfaces
+
+        Returns:
+            Formatted network interfaces string
+        """
+        if not data:
+            return f"{ProxmoxTheme.RESOURCES['network']} No network interfaces found"
+
+        result = [f"{ProxmoxTheme.RESOURCES['network']} VM Network Interfaces"]
+
+        for vm in data:
+            result.extend([
+                "",
+                f"{ProxmoxTheme.RESOURCES['vm']} {vm.get('name', 'Unknown')} (ID: {vm['vmid']}) on {vm['node']}"
+            ])
+
+            if vm.get("error"):
+                result.append(f"    ⚠️ Error: {vm['error']}")
+                continue
+
+            interfaces = vm.get("interfaces", [])
+            if not interfaces:
+                result.append("    No interfaces found")
+                continue
+
+            for iface in interfaces:
+                result.extend([
+                    f"    {iface.get('name', 'unknown')}",
+                    f"      • MAC: {iface.get('mac', 'N/A')}"
+                ])
+                if iface.get("ipv4"):
+                    result.append(f"      • IPv4: {', '.join(iface['ipv4'])}")
+                if iface.get("ipv6"):
+                    result.append(f"      • IPv6: {', '.join(iface['ipv6'])}")
+
         return "\n".join(result)

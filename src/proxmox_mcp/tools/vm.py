@@ -13,10 +13,10 @@ This module provides tools for managing and interacting with Proxmox VMs:
 The tools implement fallback mechanisms for scenarios where
 detailed VM information might be temporarily unavailable.
 """
-from typing import List
+from typing import List, Optional
 from mcp.types import TextContent as Content
 from .base import ProxmoxTool
-from .definitions import GET_VMS_DESC, EXECUTE_VM_COMMAND_DESC
+from .definitions import GET_VMS_DESC, EXECUTE_VM_COMMAND_DESC, GET_VM_NETWORK_INTERFACES_DESC
 from .console.manager import VMConsoleManager
 
 class VMTools(ProxmoxTool):
@@ -150,3 +150,162 @@ class VMTools(ProxmoxTool):
             return [Content(type="text", text=formatted)]
         except Exception as e:
             self._handle_error(f"execute command on VM {vmid}", e)
+
+    def get_vm_network_interfaces(
+        self,
+        targets: Optional[List[dict]] = None,
+        node: Optional[str] = None,
+        vmid: Optional[str] = None
+    ) -> List[Content]:
+        """Get network interface information for VM(s) via QEMU guest agent.
+
+        Uses the guest agent's network-get-interfaces capability to retrieve
+        IP addresses and MAC addresses. This does not require guest-exec
+        permissions, only the basic guest agent to be running.
+
+        Args:
+            targets: List of VM targets [{"node": "pve1", "vmid": "100"}, ...]. Takes priority.
+            node: Host node name (e.g., 'pve1'). If omitted, queries all nodes.
+            vmid: VM ID number (e.g., '100'). If omitted, queries all running VMs.
+
+        Returns:
+            List of Content objects containing formatted network interface info
+
+        Raises:
+            ValueError: If VM is not found or not running
+            RuntimeError: If guest agent query fails
+        """
+        try:
+            results = []
+
+            # targets takes priority if provided
+            if targets:
+                vm_targets = self._validate_targets(targets)
+            else:
+                vm_targets = self._get_vm_targets(node, vmid)
+
+            for target_node, target_vmid, vm_name in vm_targets:
+                vm_result = {
+                    "vmid": target_vmid,
+                    "node": target_node,
+                    "name": vm_name,
+                    "interfaces": [],
+                    "error": None
+                }
+
+                try:
+                    interfaces = self._query_vm_network_interfaces(target_node, target_vmid)
+                    vm_result["interfaces"] = interfaces
+                except Exception as e:
+                    vm_result["error"] = str(e)
+
+                results.append(vm_result)
+
+            return self._format_response(results, "network_interfaces")
+        except Exception as e:
+            self._handle_error("get network interfaces", e)
+
+    def _get_vm_targets(self, node: Optional[str], vmid: Optional[str]) -> List[tuple]:
+        """Get list of (node, vmid, name) tuples to query based on parameters.
+
+        Args:
+            node: Host node name, or None for all nodes
+            vmid: VM ID, or None for all running VMs
+
+        Returns:
+            List of (node, vmid, name) tuples for VMs to query
+        """
+        targets = []
+
+        if node and vmid:
+            # Single VM - get name from API
+            vm_status = self.proxmox.nodes(node).qemu(vmid).status.current.get()
+            targets.append((node, vmid, vm_status.get("name", f"VM {vmid}")))
+        elif node:
+            # All running VMs on specified node
+            vms = self.proxmox.nodes(node).qemu.get()
+            for vm in vms:
+                if vm["status"] == "running":
+                    targets.append((node, str(vm["vmid"]), vm.get("name", f"VM {vm['vmid']}")))
+        else:
+            # All running VMs cluster-wide
+            for n in self.proxmox.nodes.get():
+                node_name = n["node"]
+                vms = self.proxmox.nodes(node_name).qemu.get()
+                for vm in vms:
+                    if vm["status"] == "running":
+                        targets.append((node_name, str(vm["vmid"]), vm.get("name", f"VM {vm['vmid']}")))
+
+        return targets
+
+    def _validate_targets(self, targets: List[dict]) -> List[tuple]:
+        """Validate and convert target list to (node, vmid, name) tuples.
+
+        Args:
+            targets: List of dicts with 'node' and 'vmid' keys
+
+        Returns:
+            List of (node, vmid, name) tuples
+
+        Raises:
+            ValueError: If target format is invalid
+        """
+        validated = []
+        for target in targets:
+            if not isinstance(target, dict):
+                raise ValueError(f"Target must be dict, got {type(target)}")
+
+            node = target.get('node')
+            vmid = target.get('vmid')
+
+            if not node or not vmid:
+                raise ValueError(f"Target must have 'node' and 'vmid': {target}")
+
+            # Get VM name from API
+            try:
+                vm_status = self.proxmox.nodes(str(node)).qemu(str(vmid)).status.current.get()
+                validated.append((str(node), str(vmid), vm_status.get("name", f"VM {vmid}")))
+            except Exception:
+                # Include in results with error rather than failing validation
+                validated.append((str(node), str(vmid), f"VM {vmid}"))
+
+        return validated
+
+    def _query_vm_network_interfaces(self, node: str, vmid: str) -> List[dict]:
+        """Query a single VM's network interfaces via guest agent.
+
+        Args:
+            node: Host node name
+            vmid: VM ID number
+
+        Returns:
+            List of interface dictionaries with name, mac, ipv4, ipv6
+
+        Raises:
+            Exception: If guest agent query fails
+        """
+        agent_endpoint = self.proxmox.nodes(node).qemu(vmid).agent
+        network_data = agent_endpoint("network-get-interfaces").get()
+
+        interfaces = []
+        for iface in network_data.get("result", []):
+            if iface.get("name") == "lo":
+                continue  # Skip loopback
+
+            interface_info = {
+                "name": iface.get("name"),
+                "mac": iface.get("hardware-address"),
+                "ipv4": [],
+                "ipv6": []
+            }
+
+            for addr in iface.get("ip-addresses", []):
+                ip = addr.get("ip-address")
+                if addr.get("ip-address-type") == "ipv4":
+                    interface_info["ipv4"].append(ip)
+                elif addr.get("ip-address-type") == "ipv6":
+                    interface_info["ipv6"].append(ip)
+
+            interfaces.append(interface_info)
+
+        return interfaces

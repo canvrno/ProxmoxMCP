@@ -37,6 +37,7 @@ from .tools.definitions import (
     GET_NODE_STATUS_DESC,
     GET_VMS_DESC,
     EXECUTE_VM_COMMAND_DESC,
+    GET_VM_NETWORK_INTERFACES_DESC,
     GET_CONTAINERS_DESC,
     GET_STORAGE_DESC,
     GET_CLUSTER_STATUS_DESC
@@ -105,6 +106,14 @@ class ProxmoxMCPServer:
         ):
             return await self.vm_tools.execute_command(node, vmid, command)
 
+        @self.mcp.tool(description=GET_VM_NETWORK_INTERFACES_DESC)
+        def get_vm_network_interfaces(
+            targets: Annotated[Optional[List[dict]], Field(default=None, description="List of VM targets: [{'node': 'pve1', 'vmid': '100'}, ...]")] = None,
+            node: Annotated[Optional[str], Field(default=None, description="Host node name (e.g. 'pve1'). Omit for all nodes.")] = None,
+            vmid: Annotated[Optional[str], Field(default=None, description="VM ID (e.g. '100'). Omit for all running VMs.")] = None
+        ):
+            return self.vm_tools.get_vm_network_interfaces(targets, node, vmid)
+
         # Storage tools
         @self.mcp.tool(description=GET_STORAGE_DESC)
         def get_storage():
@@ -145,15 +154,15 @@ class ProxmoxMCPServer:
 if __name__ == "__main__":
     config_path = os.getenv("PROXMOX_MCP_CONFIG")
     if not config_path:
-        print("PROXMOX_MCP_CONFIG environment variable must be set")
+        print("PROXMOX_MCP_CONFIG environment variable must be set", file=sys.stderr)
         sys.exit(1)
     
     try:
         server = ProxmoxMCPServer(config_path)
         server.start()
     except KeyboardInterrupt:
-        print("\nShutting down gracefully...")
+        print("\nShutting down gracefully...", file=sys.stderr)
         sys.exit(0)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
