@@ -25,6 +25,7 @@ wheels/
 .venv
 env/
 venv/
+venv-new/
 ENV/
 
 # IDE
@@ -59,3 +60,4 @@ coverage.xml
 
 # Local configuration
 config/config.json
+proxmox-config/*.json
