@@ -18,7 +18,7 @@ import logging
 import os
 import sys
 import signal
-from typing import Optional, List, Annotated
+from typing import Optional, List, Annotated, Union
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.tools import Tool
@@ -32,6 +32,7 @@ from .tools.node import NodeTools
 from .tools.vm import VMTools
 from .tools.storage import StorageTools
 from .tools.cluster import ClusterTools
+from .tools.container import ContainerTools
 from .tools.definitions import (
     GET_NODES_DESC,
     GET_NODE_STATUS_DESC,
@@ -63,6 +64,7 @@ class ProxmoxMCPServer:
         self.vm_tools = VMTools(self.proxmox)
         self.storage_tools = StorageTools(self.proxmox)
         self.cluster_tools = ClusterTools(self.proxmox)
+        self.container_tools = ContainerTools(self.proxmox)
         
         # Initialize MCP server
         self.mcp = FastMCP("ProxmoxMCP")
@@ -100,10 +102,15 @@ class ProxmoxMCPServer:
         @self.mcp.tool(description=EXECUTE_VM_COMMAND_DESC)
         async def execute_vm_command(
             node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
-            vmid: Annotated[str, Field(description="VM ID number (e.g. '100', '101')")],
+            vmid: Annotated[Union[str, int], Field(description="VM ID number (e.g. '100', '101')")],
             command: Annotated[str, Field(description="Shell command to run (e.g. 'uname -a', 'systemctl status nginx')")]
         ):
-            return await self.vm_tools.execute_command(node, vmid, command)
+            return await self.vm_tools.execute_command(node, str(vmid), command)
+
+        # Container tools
+        @self.mcp.tool(description=GET_CONTAINERS_DESC)
+        def get_containers():
+            return self.container_tools.get_containers()
 
         # Storage tools
         @self.mcp.tool(description=GET_STORAGE_DESC)
