@@ -128,8 +128,12 @@ class ProxmoxMCPServer:
         import anyio
 
         def signal_handler(signum, frame):
+            # sys.exit() would run interpreter finalization while the stdio transport's
+            # worker thread still holds the stdin buffer lock: Python then aborts with
+            # "_enter_buffered_busy" (SIGABRT, coredump) on every client restart.
             self.logger.info("Received signal to shutdown...")
-            sys.exit(0)
+            logging.shutdown()
+            os._exit(0)
 
         # Set up signal handlers
         signal.signal(signal.SIGINT, signal_handler)

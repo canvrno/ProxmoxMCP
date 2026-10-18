@@ -13,6 +13,6 @@
     "logging": {
         "level": "DEBUG",
         "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        "file": "proxmox_mcp.log"
+        "file": "/absolute/path/to/proxmox_mcp.log"
     }
 }
